@@ -12,7 +12,7 @@ version   4.10.3    True        False         154d    Cluster version is 4.10.3
 ```
 #  Installing the RHACM Operator and importing clusters
 
-## Create a project named open-cluster-management
+### Create a project named open-cluster-management
 ```
 $ oc login -u admin -p redhat \
   https://api.ocp4.example.com:6443
@@ -20,7 +20,7 @@ $ oc login -u admin -p redhat \
 $ oc new-project open-cluster-management
 ```
 
-## Create an operator group
+### Create an operator group
 ```
 $ cat operator-group.yaml 
 apiVersion: operators.coreos.com/v1
@@ -35,7 +35,7 @@ $ oc create -f operator-group.yaml
 
 ```
 
-## Create a subscription to the Advanced Cluster Management for Kubernetes operator
+### Create a subscription to the Advanced Cluster Management for Kubernetes operator
 ```
 $ cat subscription.yaml 
 apiVersion: operators.coreos.com/v1alpha1
@@ -64,7 +64,7 @@ $ oc patch installplan install-xztxr --type merge --patch '{"spec":{"approved":t
 
 ```
 
-## Watch the status of the available ClusterServiceVersion objects to verify the installation status
+### Watch the status of the available ClusterServiceVersion objects to verify the installation status
 
 ```
 $ oc get csv
@@ -74,7 +74,7 @@ advanced-cluster-management.v2.4.2   Advanced Cluster Management for Kubernetes 
 
 ```
 
-## Create the RHACM MultiClusterHub object
+### Create the RHACM MultiClusterHub object
 
 ```
 $ cat mch.yaml
@@ -97,22 +97,22 @@ multiclusterhub   Running   4m26s
 
 ```
 
-# Prepare RHACM to import a cluster using the name managed-cluster
+## Prepare RHACM to import a cluster using the name managed-cluster
 
-## In the hub cluster, create the managed-cluster namespace
+### In the hub cluster, create the managed-cluster namespace
 ```
 $ oc new-project managed-cluster
 
 ```
 
-## Label the namespace with the cluster name used by RHACM
+### Label the namespace with the cluster name used by RHACM
 
 ```
 $ oc label namespace managed-cluster cluster.open-cluster-management.io/managedCluster=managed-cluster
 
 ```
 
-## Create the ManagedCluster object 
+### Create the ManagedCluster object 
 
 ```
 $ cat mngcluster.yaml
@@ -127,7 +127,7 @@ $ oc create -f mngcluster.yaml
 
 ```
 
-## Create a klusterlet add-on configuration
+### Create a klusterlet add-on configuration
 
 ```
 $ cat klusterlet.yaml
@@ -160,9 +160,9 @@ $ oc create -f klusterlet.yaml
 
 **Next, the ManagedCluster-Import-Controller generates a secret named managed-cluster-import. This secret contains the import.yaml file that contains the secret used in the imported cluster.
 
-# Generate the files to import the managed-cluster into RHACM
+## Generate the files to import the managed-cluster into RHACM
 
-## Obtain the necessary files to import the managed-cluster cluster
+### Obtain the necessary files to import the managed-cluster cluster
 ```
 $ oc get secret managed-cluster-import \
    -n managed-cluster -o jsonpath={.data.crds\\.yaml} | base64 \
@@ -174,27 +174,27 @@ $ oc get secret managed-cluster-import \
 
 ```
 
-# Import the RHCOP cluster available in the lab environment, ocp4-mng.example.com, into RHACM. Use managed-cluster as the name of the imported cluster
+## Import the RHCOP cluster available in the lab environment, ocp4-mng.example.com, into RHACM. Use managed-cluster as the name of the imported cluster
 
-## Use the terminal to log in to the ocp4-mng cluster as the admin user. The API server address is https://api.ocp4-mng.example.com:6443
+### Use the terminal to log in to the ocp4-mng cluster as the admin user. The API server address is https://api.ocp4-mng.example.com:6443
 ```
 $ oc login -u admin -p redhat \
   https://api.ocp4-mng.example.com:6443
 ```
 
-## Use the klusterlet-crd.yaml file to create the klusterlet custom resource definition.
+### Use the klusterlet-crd.yaml file to create the klusterlet custom resource definition.
 ```
 $ oc create -f klusterlet-crd.yaml
 
 ```
 
-## use the import.yaml file to create the rest of the resources necessary to import the cluster into RHACM.
+### use the import.yaml file to create the rest of the resources necessary to import the cluster into RHACM.
 
 ```
 $ oc create -f import.yaml
 ```
 
-## Verify the status of the pods running in the open-cluster-management-agent namespace.
+### Verify the status of the pods running in the open-cluster-management-agent namespace.
 
 ```
 $ oc get pod -n open-cluster-management-agent
@@ -209,7 +209,7 @@ klusterlet-work-agent-66f9556c87-kzxqc           1/1     Running   1 (42s ago)  
 
 ```
 
-## Finally, use the watch command to validate the status of the agent pods running in the open-cluster-management-agent-addon namespace.
+### Finally, use the watch command to validate the status of the agent pods running in the open-cluster-management-agent-addon namespace.
 
 ```
 $ oc get pod -n open-cluster-management-agent-addon
@@ -227,16 +227,16 @@ klusterlet-addon-workmgr-b855b98bb-4df8w                     1/1     Running   0
 
 **It takes around two minutes before the pods in the open-cluster-management-agent-addon start.
 
-# Log back into the hub cluster and verify the managed-cluster status
+## Log back into the hub cluster and verify the managed-cluster status
 
-## Log back into the hub cluster
+### Log back into the hub cluster
 
 ```
 $ oc login -u admin -p redhat \
   https://api.ocp4.example.com:6443
 ```
 
-## Verify the managed-cluster status
+### Verify the managed-cluster status
 
 ```
 $ oc get managedcluster
