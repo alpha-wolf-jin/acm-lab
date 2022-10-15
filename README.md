@@ -311,3 +311,13 @@ $ ./renew_wildcard.sh
 - Install the compliance operator from the RHACM governance dashboard.
 - Deploy the E8-scan policy.
 - Check the compliant scan result from E8 scan.
+
+```
+$ oc login -u admin -p redhat \
+  https://api.ocp4.example.com:6443
+
+$ oc new-project policy-compliance
+
+```
+
+** In the left pane, click Governance to display the governance dashboard, and then click Create policy to create the policy. The Create policy page is displayed.
