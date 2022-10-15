@@ -247,4 +247,67 @@ managed-cluster   true           https://api.ocp4-mng.example.com:6443   True   
 ```
 **The JOINED and AVAILABLE must have a True status.
 
+# Deploying and Managing Policies with RHACM
 
+**Log in to the Hub OpenShift cluster and create a policy-governance project.
+```
+$ oc login -u admin -p redhat \
+  https://api.ocp4.example.com:6443
+
+$ oc new-project policy-governance
+
+```
+
+**Log in to the RHACM web console and create the certificate policy.
+
+open Firefox and access https://multicloud-console.apps.ocp4.example.com.
+
+Create the certificate policy with the following parameters for openshift-console and openshift-ingress namespace:
+
+Field name	Value
+Name	policy-certificatepolicy
+Namespace	policy-governance
+Specifications	CertificatePolicy - Certificate management expiration
+Remediation	Inform
+
+**Click `Governance` on the left pane to navigate to the governance dashboard. Then, click `Create policy`. The Create policy page displays.
+
+**On the right side of the Create policy page, edit the YAML code as follows:
+```
+spec:
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: CertificatePolicy
+        metadata:
+          name: policy-certificatepolicy-cert-expiration
+        spec:
+          namespaceSelector:
+            include:
+              - default
+              - openshift-console
+              - openshift-ingress
+            exclude:
+              - kube-*
+          remediationAction: inform
+          severity: low
+          minimumDuration: 300h
+
+```
+
+
+```
+oc login -u admin -p redhat \
+  https://api.ocp4-mng.example.com:6443
+
+$ ./renew_wildcard.sh
+
+```
+
+# Deploying and Configuring the Compliance Operator for Multiple Clusters Using RHACM
+
+- Install the compliance operator from the RHACM governance dashboard.
+- Deploy the E8-scan policy.
+- Check the compliant scan result from E8 scan.
