@@ -89,3 +89,5 @@ NAME              STATUS    AGE
 multiclusterhub   Running   4m26s
 
 ```
+
+# Prepare RHACM to import a cluster using the name managed-cluster
