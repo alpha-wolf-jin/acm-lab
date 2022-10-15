@@ -321,3 +321,12 @@ $ oc new-project policy-compliance
 ```
 
 ** In the left pane, click Governance to display the governance dashboard, and then click Create policy to create the policy. The Create policy page is displayed.
+
+Field name	Value
+Name	policy-complianceoperator
+Namespace	policy-compliance
+Specifications	ComplianceOperator - Install the Compliance operator
+Cluster selector	location: "APAC"
+Remediation	Inform
+
+
