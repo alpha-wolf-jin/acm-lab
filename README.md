@@ -456,4 +456,94 @@ The clusters tab shows three resources: compliance-e8-scan, compliance-suite-e8,
 
 # Deploying and Managing Policies with RHACM
 
+In this lab, you create a policy to ensure that the test namespace does not exist in the production environment. 
+
+You also create an Identity and Access Management (IAM) policy to limit the number of cluster administrators to two for all clusters.
+
+```
+$ oc login -u admin -p redhat \
+  https://api.ocp4.example.com:6443
+
+$ oc new-project policy-review
+```
+
+In the left pane, click Governance to display the Governance dashboard, and then click Create policy to create the policy. The Create policy page is displayed.
+
+Complete the page with the following details, leaving the other fields unchanged. Do not click Create yet.
+
+Field name	Value
+Name	policy-namespace
+Namespace	policy-review
+Specifications	Namespace - Must have namespace 'prod'
+Cluster selector	environment: "production"
+Remediation	Enforce
+
+Use the YAML editor on the right of the Create policy page to make the following edits to the YAML file:
+
+```
+spec:
+  remediationAction: enforce
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: ConfigurationPolicy
+        metadata:
+          name: policy-namespace-prod-ns
+        spec:
+          remediationAction: inform
+          severity: low
+          namespaceSelector:
+            exclude:
+              - kube-*
+            include:
+              - default
+          object-templates:
+            - complianceType: mustnothave
+              objectDefinition:
+                kind: Namespace
+                apiVersion: v1
+                metadata:
+                  name: test
+```
+
+Click Create.
+
+**You also create an Identity and Access Management (IAM) policy to limit the number of cluster administrators to two for all clusters.
+
+In the left pane, click Governance to display the Governance dashboard, and then click Create policy to create the policy. The Create policy page is displayed.
+
+Complete the page with the following details, leaving the other fields unchanged. Do not click Create yet.
+
+Field name	Value
+Name	policy-iampolicy
+Namespace`	policy-review
+Specifications	IamPolicy - Limit clusteradmin roles
+
+Use the YAML editor on the right of the Create policy page to make the following edit to the YAML file:
+
+```
+spec:
+  remediationAction: inform
+  disabled: false
+  policy-templates:
+    - objectDefinition:
+        apiVersion: policy.open-cluster-management.io/v1
+        kind: IamPolicy
+        metadata:
+          name: policy-iampolicy-limit-clusteradmin
+        spec:
+          severity: medium
+          namespaceSelector:
+            include:
+              - '*'
+            exclude:
+              - kube-*
+              - openshift-*
+          remediationAction: inform
+          maxClusterRoleBindingUsers: 2
+```
+
+Click Create.
+
 
