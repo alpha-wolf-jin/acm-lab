@@ -686,3 +686,75 @@ $ curl -X POST -k \
   --header "Authorization: Bearer PQNZDWG9PC4KRB5C5JPETJKDELY132BGU7OMTQP9" \
   --data @finance-organization.json
 ```
+
+8. Create the budget-app-dev image repository by using the API. The lab script includes a DO480/solutions/quay-review/budget-app-dev-repository.json solution file.
+
+```
+$ cat budget-app-dev-repository.json 
+{
+    "namespace": "finance",
+    "repository": "budget-app-dev",
+    "description": "development",
+    "visibility": "private"
+}
+
+$ curl -X POST -k \
+  https://central-quay-registry.apps.ocp4.example.com/api/v1/repository \
+  --header "Content-Type: application/json" \
+  --header "Authorization: Bearer PQNZDWG9PC4KRB5C5JPETJKDELY132BGU7OMTQP9" \
+  --data @budget-app-dev-repository.json
+```
+
+9. Create the deployer robot account by using the API. The lab script includes a DO480/solutions/quay-review/deployer-robot.json solution file.
+
+```
+$ cat deployer-robot.json 
+{
+    "description": "deployer"
+
+$ curl -X PUT -k \
+  https://central-quay-registry.apps.ocp4.example.com/api/v1/organization/finance/robots/deployer \
+  --header "Content-Type: application/json" \
+  --header "Authorization: Bearer PQNZDWG9PC4KRB5C5JPETJKDELY132BGU7OMTQP9" \
+  --data @deployer-robot.json
+{"name": "finance+deployer", "created": "Sun, 16 Oct 2022 05:03:47 -0000", "last_accessed": null, "description": "deployer", "token": "DOWMJQMRUFMUT3PF8N7B6RII7Y6Q5CTFX5VCL3MH4HSLR2NOYDGZCLV2F7U1VFAF", "unstructured_metadata": null}
+
+```
+
+10. Grant permissions to the deployer robot account over the budget-app-dev image repository.
+
+Use the curl command to grant the deployer robot account the write role on the budget-app-dev repository in the finance organization. Replace the token for the quayadmin user with the token that you obtained in a previous step.
+
+```
+$ curl -X PUT -k \
+  https://central-quay-registry.apps.ocp4.example.com/api/v1/repository/finance/budget-app-dev/permissions/user/finance+deployer \
+  --header "Content-Type: application/json" \
+  --header "Authorization: Bearer PQNZDWG9PC4KRB5C5JPETJKDELY132BGU7OMTQP9" \
+  --data '{"role": "write"}'
+{"role": "write", "name": "finance+deployer", "is_robot": true, "avatar": {"name": "finance+deployer", "hash": "9a16cc387a65db286096651cbd5f36a29a3513b2da13c7d5bb82553769c5f574", "color": "#b5cf6b", "kind": "robot"}, "is_org_member": true}
+
+```
+
+11. Create a budget-app:development image by using the podman command. You can create an image based on the quay.io/podman/hello image.
+
+Create a Containerfile file containing a minimal image definition. Your file should match the following example.
+
+```
+$ mkdir tmp
+$ cd tmp
+$ vim Containerfile
+$ cat Containerfile
+FROM quay.io/podman/hello
+$ podman build . -t budget-app:development
+```
+
+12. As the deployer robot account, push the image to the budget-app-dev image repository in the finance organization.
+
+```
+$ podman login -u=finance+deployer \
+  -p=DOWMJQMRUFMUT3PF8N7B6RII7Y6Q5CTFX5VCL3MH4HSLR2NOYDGZCLV2F7U1VFAF \
+  central-quay-registry.apps.ocp4.example.com
+
+$ podman push localhost/budget-app:development \
+  central-quay-registry.apps.ocp4.example.com/finance/budget-app-dev
+```
