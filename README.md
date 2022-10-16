@@ -546,4 +546,28 @@ spec:
 
 Click Create.
 
+# Installing and Configuring Red Hat Quay
+
+In this lab, you use the command line to install Red Quay and push a container image by using a robot account.
+
+1. Log in to the ocp4 cluster as the admin user with the redhat password. The API server address is https://api.ocp4.example.com:6443.
+
+```
+$ oc login -u admin -p redhat \
+  https://api.ocp4.example.com:6443
+```
+
+2. Install the Quay operator cluster-wide. Use the do480-catalog offline catalog. The lab script includes a DO480/solutions/quay-review/subscription.yaml solution file.
+
+```
+
+```
+
+3. Create a registry namespace.
+
+
+```
+
+```
+
 
