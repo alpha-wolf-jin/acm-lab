@@ -560,6 +560,24 @@ $ oc login -u admin -p redhat \
 2. Install the Quay operator cluster-wide. Use the do480-catalog offline catalog. The lab script includes a DO480/solutions/quay-review/subscription.yaml solution file.
 
 ```
+$ cat subscription.yaml 
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: quay-operator
+  namespace: openshift-operators
+spec:
+  sourceNamespace: openshift-marketplace
+  source: do480-catalog
+  channel: stable-3.6
+  installPlanApproval: Automatic
+  name: quay-operator
+
+$ oc create -f subscription.yaml
+
+$ oc get deployment -n openshift-operators
+NAME                   READY   UP-TO-DATE   AVAILABLE   AGE
+quay-operator.v3.6.4   1/1     1            1           24s
 
 ```
 
@@ -567,7 +585,104 @@ $ oc login -u admin -p redhat \
 
 
 ```
+$ oc create namespace registry
+```
+4. Create an init-config-bundle-secret object in the registry namespace with a config.yaml key containing the Quay configuration.
+
+Use the suggested options for automation.
+
+- Enable the /api/v1/user/initialize Quay API endpoint to create the first user.
+- Allow access to the Quay registry API without the use of an X-Requested-With header.
+- Define a quayadmin super user.
+
+```
+$ cat config.yaml 
+FEATURE_USER_INITIALIZE: true
+BROWSER_API_CALLS_XHR_ONLY: false
+SUPER_USERS:
+- quayadmin
+FEATURE_USER_CREATION: false
+
+$ oc create secret generic \
+  --from-file config.yaml=./config.yaml init-config-bundle-secret -n registry
 
 ```
 
+5. Create a QuayRegistry object named central in the registry namespace. The QuayRegistry object references the init-config-bundle-secret object containing the Quay configuration.
 
+Do not include Clair, the horizontal pod autoscaler, or the mirror feature.
+
+The lab script includes a DO480/solutions/quay-review/quay-registry.yaml solution file.
+
+```
+$ cat quay-registry.yaml 
+apiVersion: quay.redhat.com/v1
+kind: QuayRegistry
+metadata:
+  name: central
+  namespace: registry
+spec:
+  configBundleSecret: init-config-bundle-secret
+  components:
+    - kind: clair
+      managed: false
+    - kind: horizontalpodautoscaler
+      managed: false
+    - kind: mirror
+      managed: false
+
+$ oc create -f quay-registry.yaml
+
+$ oc get deployment -n registry
+NAME                         READY   UP-TO-DATE   AVAILABLE   AGE
+central-quay-app             2/2     2            2           2m52s
+central-quay-config-editor   1/1     1            1           2m52s
+central-quay-database        1/1     1            1           2m52s
+central-quay-redis           1/1     1            1           2m52s
+```
+
+6. Create the quayadmin user and obtain an access token. The password must be at least 8 characters and contain no whitespace. The lab script includes a DO480/solutions/quay-review/quayadmin-user.json solution file.
+
+Store the token in a /home/student/quayadmin_token file. This step is necessary so that the lab script can use the API to grade your work.
+```
+$ cat quayadmin-user.json 
+{
+    "username": "quayadmin",
+    "password":"redhat123",
+    "email": "quayadmin@example.com",
+    "access_token": true
+}
+
+
+```
+
+Use the curl command to post the user definition in JSON format to the initialize user endpoint. Note the returned access token for a later step.
+
+```
+$ curl -X POST -k \
+>   https://central-quay-registry.apps.ocp4.example.com/api/v1/user/initialize \
+>   --header "Content-Type: application/json" \
+>   --data @quayadmin-user.json
+{"access_token":"PQNZDWG9PC4KRB5C5JPETJKDELY132BGU7OMTQP9","email":"quayadmin@example.com","encrypted_password":"3eIgOiJZeGzkZByboAYzaicIriMfQNCEqBIe0G9ZLb7rc42f/qdOTmFrXcCIz6qW","username":"quayadmin"}
+
+$ echo PQNZDWG9PC4KRB5C5JPETJKDELY132BGU7OMTQP9 >quayadmin_token
+
+$ QUAYADMIN_TOKEN=PQNZDWG9PC4KRB5C5JPETJKDELY132BGU7OMTQP9
+
+```
+
+7. Create the finance organization by using the API. The lab script includes a DO480/solutions/quay-review/finance-organization.json solution file.
+
+```
+$ cat finance-organization.json 
+{
+    "name": "finance",
+    "email": "finance@example.com"
+}
+
+$ curl -X POST -k \
+  https://central-quay-registry.apps.ocp4.example.com/api/v1/organization/ \
+  --header "Content-Type: application/json" \
+  --header "Authorization: Bearer PQNZDWG9PC4KRB5C5JPETJKDELY132BGU7OMTQP9" \
+  --data @finance-organization.json
+```
